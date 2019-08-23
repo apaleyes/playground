@@ -68,76 +68,65 @@ class TicTacToeGame:
     def simulate_to_the_end(self, position, is_first_player_move):
 
     def is_terminal(self, position):
+        # TOFIX: at the moment this returns winner, not a boolean
+
+
+        get_winner_by_marker = lambda marker: FIRST_PLAYER_WIN if marker == self.first_player_marker else SECOND_PLAYER_WIN
+
+        board = [position[i:i+self.board_size] for i in range(0, len(position), self.board_size)]
+
+        # we are looking at squares of self.win_count size
+        # therefore a winning row, column or diagonal should contain only one symbol
         for top in range(self.board_size - self.win_count + 1)
             bottom = top + self.win_count - 1;
 
             for left in range(self.board_size - self.win_count + 1):
                 rigth =  left + self.win_count - 1
 
-                # Check each row.
+                # Check each row
                 for row in range(top, bottom + 1)
-                    if position[row][left] == self.empty_marker:
+                    if board[row][left] == self.empty_marker:
+                        # if row contains empty marker, it cannot be a winning row
                         continue
 
-                    for (int col = left; col <= right; ++col) {
-                        if (board[row][col] != board[row][left]) {
-                            continue nextRow;
-                        }
-                    }
+                    all_markers = set(board[row])
+                    if len(all_markers != 1):
+                        # not all markers are the same, so cannot be a winning row
+                        continue
 
-                    return board[row][left];
-                }
 
-                // Check each column.
-                nextCol: for (int col = left; col <= right; ++col) {
-                    if (board[top][col] == Square.NONE) {
-                        continue;
-                    }
+                    return get_winner_by_marker(board[row][left])
 
-                    for (int row = top; row <= bottom; ++row) {
-                        if (board[row][col] != board[top][col]) {
-                            continue nextCol;
-                        }
-                    }
+                # Check each column.
+                for col in range(left, right + 1):
+                    if board[top][col] == self.empty_marker:
+                        # if column contains empty marker, it cannot be a winning column
+                        continue
 
-                    return board[top][col];
-                }
+                    all_markers = set([board[i][col] for i in range(top, bottom + 1)])
+                    if len(all_markers != 1):
+                        # not all markers are the same, so cannot be a winning column
+                        continue
 
-                // Check top-left to bottom-right diagonal.
-                diag1: if (board[top][left] != Square.NONE) {
-                    for (int i = 1; i < lengthToWin; ++i) {
-                        if (board[top+i][left+i] != board[top][left]) {
-                            break diag1;
-                        }
-                    }
+                    return get_winner_by_marker(board[top][col])
 
-                    return board[top][left];
-                }
+                winning_marker = None
+                # Check top-left to bottom-right diagonal.
+                if board[top][left] != self.empty_marker:
+                    all_markers = [board[top + i][left + i] for i in range(0, self.win_count)]
+                    if len(all_markers == 1):
+                        return get_winner_by_marker(board[top][left])
 
-                // Check top-right to bottom-left diagonal.
-                diag2: if (board[top][right] != Square.NONE) {
-                    for (int i = 1; i < lengthToWin; ++i) {
-                        if (board[top+i][right-i] != board[top][right]) {
-                            break diag2;
-                        }
-                    }
+                # Check top-right to bottom-left diagonal.
+                if board[top][right] != self.empty_marker:
+                    all_markers = [board[top + i][right - i] for i in range(0, self.win_count)]
+                    if len(all_markers == 1):
+                        return get_winner_by_marker(board[top][right])
 
-                    return board[top][right];
-                }
-            }
-        }
 
-        // Check for a completely full board.
-        boolean isFull = true;
-
-        full: for (int row = 0; row < board.length; ++row) {
-            for (int col = 0; col < board.length; ++col) {
-                if (board[row][col] == Square.NONE) {
-                    isFull = false;
-                    break full;
-                }
-            }
-        }
+        # Check for a completely full board.
+        if self.empty_marker not in position:
+            return DRAW
 
 class Node:
     def __init__(self, position):
