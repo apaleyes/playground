@@ -16,8 +16,7 @@ class MockGame:
     def __init__(self, n_children=3):
         self.n_children = n_children
 
-    @property
-    def initial_position(self):
+    def get_initial_position(self):
         return "init"
 
     def create_children(self, position, is_first_player_move):
@@ -43,14 +42,13 @@ class MockGame:
 class TicTacToeGame:
     def __init__(self, board_size=3, win_count=3):
         self.board_size = board_size
-        self.win_size = win_size
+        self.win_count = win_count
 
         self.first_player_marker = 'x'
         self.second_player_marker = 'o'
         self.empty_marker = '.'
 
-    @property
-    def initial_position(self):
+    def get_initial_position(self):
         position = [self.empty_marker] * (self.board_size * self.board_size)
         return position
 
@@ -66,31 +64,49 @@ class TicTacToeGame:
         return children
 
     def simulate_to_the_end(self, position, is_first_player_move):
+        sim_position = position[:]
+        self.print_board(sim_position)
 
-    def is_terminal(self, position):
-        # TOFIX: at the moment this returns winner, not a boolean
+        outcome = self.find_outcome(sim_position)
+        while outcome is None:
+            next_marker = self.first_player_marker if is_first_player_move else self.second_player_marker
+            empty_spaces = [i for i, m in enumerate(sim_position) if m == self.empty_marker]
 
+            # make tje move
+            next_cell = random.choice(empty_spaces)
+            sim_position[next_cell] = next_marker
 
+            # prepare next move
+            is_first_player_move = not is_first_player_move
+            outcome = self.find_outcome(sim_position)
+            self.print_board(sim_position)
+
+        return outcome
+
+    def if_board_full(self, position):
+        return (self.empty_marker not in position)
+
+    def find_outcome(self, position):
         get_winner_by_marker = lambda marker: FIRST_PLAYER_WIN if marker == self.first_player_marker else SECOND_PLAYER_WIN
 
         board = [position[i:i+self.board_size] for i in range(0, len(position), self.board_size)]
 
         # we are looking at squares of self.win_count size
         # therefore a winning row, column or diagonal should contain only one symbol
-        for top in range(self.board_size - self.win_count + 1)
+        for top in range(self.board_size - self.win_count + 1):
             bottom = top + self.win_count - 1;
 
             for left in range(self.board_size - self.win_count + 1):
-                rigth =  left + self.win_count - 1
+                right =  left + self.win_count - 1
 
                 # Check each row
-                for row in range(top, bottom + 1)
+                for row in range(top, bottom + 1):
                     if board[row][left] == self.empty_marker:
                         # if row contains empty marker, it cannot be a winning row
                         continue
 
-                    all_markers = set(board[row])
-                    if len(all_markers != 1):
+                    all_markers = set(board[row][left:right+1])
+                    if len(all_markers) != 1:
                         # not all markers are the same, so cannot be a winning row
                         continue
 
@@ -104,29 +120,42 @@ class TicTacToeGame:
                         continue
 
                     all_markers = set([board[i][col] for i in range(top, bottom + 1)])
-                    if len(all_markers != 1):
+                    if len(all_markers) != 1:
                         # not all markers are the same, so cannot be a winning column
                         continue
 
                     return get_winner_by_marker(board[top][col])
 
-                winning_marker = None
                 # Check top-left to bottom-right diagonal.
                 if board[top][left] != self.empty_marker:
-                    all_markers = [board[top + i][left + i] for i in range(0, self.win_count)]
-                    if len(all_markers == 1):
+                    all_markers = set([board[top + i][left + i] for i in range(0, self.win_count)])
+                    if len(all_markers) == 1:
                         return get_winner_by_marker(board[top][left])
 
                 # Check top-right to bottom-left diagonal.
                 if board[top][right] != self.empty_marker:
-                    all_markers = [board[top + i][right - i] for i in range(0, self.win_count)]
-                    if len(all_markers == 1):
+                    all_markers = set([board[top + i][right - i] for i in range(0, self.win_count)])
+                    if len(all_markers) == 1:
                         return get_winner_by_marker(board[top][right])
 
 
         # Check for a completely full board.
-        if self.empty_marker not in position:
+        if self.if_board_full(position):
             return DRAW
+
+        # there is no winner yet
+        return None
+
+    def is_terminal(self, position):
+        outcome = self.find_outcome(position)
+        return (outcome is not None)
+
+    def print_board(self, position):
+        board = [position[i:i+self.board_size] for i in range(0, len(position), self.board_size)]
+        for line in board:
+            print(''.join(line))
+        print('\n')
+
 
 class Node:
     def __init__(self, position):
@@ -149,7 +178,7 @@ class Node:
 
 
 def loop(game, n_iterations):
-    root = Node(game.initial_position)
+    root = Node(game.get_initial_position())
 
     for i in range(n_iterations):
         print("Starting iteration " + str(i))
@@ -229,5 +258,8 @@ def print_tree(node, level=0):
 
 
 if __name__ == "__main__":
-    game = MockGame()
-    loop(game, 5)
+    # game = MockGame()
+    # loop(game, 5)
+
+    tttg = TicTacToeGame(board_size=4)
+    print(tttg.simulate_to_the_end(tttg.get_initial_position(), True))
