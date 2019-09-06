@@ -65,7 +65,7 @@ class TicTacToeGame:
 
     def simulate_to_the_end(self, position, is_first_player_move):
         sim_position = position[:]
-        self.print_board(sim_position)
+        #self.print_board(sim_position)
 
         outcome = self.find_outcome(sim_position)
         while outcome is None:
@@ -79,7 +79,7 @@ class TicTacToeGame:
             # prepare next move
             is_first_player_move = not is_first_player_move
             outcome = self.find_outcome(sim_position)
-            self.print_board(sim_position)
+            # self.print_board(sim_position)
 
         return outcome
 
@@ -177,7 +177,7 @@ class Node:
         return v / n + UCB_C * math.sqrt(math.log(N) / n)
 
 
-def loop(game, n_iterations):
+def loop(game, n_iterations, debug=False):
     root = Node(game.get_initial_position())
 
     for i in range(n_iterations):
@@ -192,7 +192,8 @@ def loop(game, n_iterations):
         outcome = simulate(new_child, game)
         backpropagate(new_child, outcome)
 
-    print_tree(root)
+    if debug:
+        print_tree(root)
 
 
 def select(node, game):
@@ -252,14 +253,14 @@ def backpropagate(node, outcome):
 #         print_tree(c)
 
 def print_tree(node, level=0):
-    print('\t' * level + node.position)
+    print('{}{}'.format('\t' * level, node.position))
     for child in node.children:
         print_tree(child, level + 1)
 
 
 if __name__ == "__main__":
-    # game = MockGame()
-    # loop(game, 5)
+    game = TicTacToeGame()
+    loop(game, 100, True)
 
-    tttg = TicTacToeGame(board_size=4)
-    print(tttg.simulate_to_the_end(tttg.get_initial_position(), True))
+    # tttg = TicTacToeGame(board_size=4)
+    # print(tttg.simulate_to_the_end(tttg.get_initial_position(), True))
