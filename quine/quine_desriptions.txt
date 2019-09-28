@@ -1,0 +1,5 @@
+quine.py - my first quine ever. Uses verbatim strings a lot of single quote/double quote trickery.
+
+quine.js - again is based on verbatim strings and quote treatement in JS.
+
+quine.cs - no verbatim strings! Uses chars to render difficult stuff like new lines, quotes and backslashes.
