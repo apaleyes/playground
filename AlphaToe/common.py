@@ -7,20 +7,6 @@ DRAW = 0
 UCB_C = 1.0
 
 
-class Game:
-    def get_initial_position(self):
-        raise NotImplementedError
-
-    def create_children(self, position, is_first_player_move):
-        raise NotImplementedError
-
-    def simulate_to_the_end(self, position, is_first_player_move):
-        raise NotImplementedError
-
-    def is_terminal(self, position):
-        raise NotImplementedError
-
-
 class Node:
     def __init__(self, position):
         self.position = position
