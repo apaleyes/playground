@@ -4,10 +4,8 @@ FIRST_PLAYER_WIN = 1
 SECOND_PLAYER_WIN = -1
 DRAW = 0
 
-UCB_C = 1.0
 
-
-class Node:
+class TreeNode:
     def __init__(self, position):
         self.position = position
         self.value = 0
@@ -16,16 +14,6 @@ class Node:
         self.parent = None
         self.is_first_player_move = True
 
-    def ucb(self):
-        v = self.value
-        n = self.n_visits
-        N = self.parent.n_visits
-
-        if n == 0:
-            n = 1
-
-        return v / n + UCB_C * math.sqrt(math.log(N) / n)
-
 
 class TreeSearch:
     def __init__(self, game):
@@ -33,7 +21,7 @@ class TreeSearch:
 
 
     def loop(self, n_iterations, debug=False):
-        root = Node(self.game.get_initial_position())
+        root = self.create_node(self.game.get_initial_position())
 
         for i in range(n_iterations):
             print("Starting iteration " + str(i))
@@ -49,6 +37,10 @@ class TreeSearch:
 
         if debug:
             self.print_tree(root)
+
+
+    def create_node(self, position):
+        raise NotImplementedError
 
 
     def select(self, node):
