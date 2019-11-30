@@ -43,6 +43,10 @@ class TreeSearch:
         raise NotImplementedError
 
 
+    def expand(self, leaf_node):
+        raise NotImplementedError
+
+
     def select(self, node):
         raise NotImplementedError
 
