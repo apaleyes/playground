@@ -99,7 +99,7 @@ class TicTacToeGame(Game):
         # we are looking at squares of self.win_count size
         # therefore a winning row, column or diagonal should contain only one symbol
         for top in range(self.board_size - self.win_count + 1):
-            bottom = top + self.win_count - 1;
+            bottom = top + self.win_count - 1
 
             for left in range(self.board_size - self.win_count + 1):
                 right =  left + self.win_count - 1
