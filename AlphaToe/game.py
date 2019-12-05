@@ -16,6 +16,14 @@ class Game:
     def is_terminal(self, position):
         raise NotImplementedError
 
+    def get_possible_moves(self, position, is_first_player_move):
+        raise NotImplementedError
+
+    def position_to_model_input(self, position):
+        raise NotImplementedError
+
+    def move_to_model_input(self, move):
+        raise NotImplementedError
 
 class MockGame(Game):
     def __init__(self, n_children=3):
@@ -68,6 +76,15 @@ class TicTacToeGame(Game):
 
         return children
 
+    def get_possible_moves(self, position, is_first_player_move):
+        moves = []
+        next_marker = self.first_player_marker if is_first_player_move else self.second_player_marker
+        for i, marker in enumerate(position):
+            if marker == self.empty_marker:
+                moves.append({"marker": next_marker, "index": i})
+
+        return moves
+
     def simulate_to_the_end(self, position, is_first_player_move):
         sim_position = position[:]
         #self.print_board(sim_position)
@@ -77,7 +94,7 @@ class TicTacToeGame(Game):
             next_marker = self.first_player_marker if is_first_player_move else self.second_player_marker
             empty_spaces = [i for i, m in enumerate(sim_position) if m == self.empty_marker]
 
-            # make tje move
+            # make the move
             next_cell = random.choice(empty_spaces)
             sim_position[next_cell] = next_marker
 
@@ -156,7 +173,27 @@ class TicTacToeGame(Game):
         return (outcome is not None)
 
     def print_board(self, position):
-        board = [position[i:i+self.board_size] for i in range(0, len(position), self.board_size)]
+        board = [position[i:(i + self.board_size)] for i in range(0, len(position), self.board_size)]
         for line in board:
             print(''.join(line))
         print('\n')
+
+    def position_to_model_input(self, position):
+        marker_to_value = {
+            self.first_player_marker: 1,
+            self.empty_marker: 0,
+            self.second_player_marker: -1
+        }
+
+        input_vector = [marker_to_value[marker] for marker in position]
+
+        return input_vector
+
+    def move_to_model_input(self, move):
+        move_input = [0] * (self.board_size ** 2)
+        if move["marker"] == self.first_player_marker:
+            move_input[move["index"]] = 1
+        else:
+            move_input[move["index"]] = -1
+
+        return move_input
