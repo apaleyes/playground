@@ -97,6 +97,10 @@ class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
         self.model = model
 
     def simulate(self, node):
+        outcome = self.game.find_outcome(node.position)
+        if outcome is not None:
+            return outcome
+
         # This is pseudocode only at the moment
         position_model_input = self.game.position_to_model_input(node.position)
         possible_moves = self.game.get_possible_moves(node.position, node.is_first_player_move)
@@ -121,5 +125,11 @@ if __name__ == '__main__':
     model = Model(2 * board_size * board_size)
     mcts = ModelBaseMonteCarloTreeSearch(game, model)
 
-    next_position = mcts.loop(3)
-    print(next_position)
+    position = None
+    for _ in range(10):
+        position = mcts.loop(3, initial_position=position)
+        print(position)
+        outcome = game.find_outcome(position)
+        if outcome is not None:
+            print("Finished. Outcome ", outcome)
+            break

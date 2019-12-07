@@ -28,6 +28,9 @@ class Game:
     def move_to_model_input(self, move):
         raise NotImplementedError
 
+    def detect_if_first_player_move(self, position):
+        raise NotImplementedError
+
 class MockGame(Game):
     def __init__(self, n_children=3):
         self.n_children = n_children
@@ -53,6 +56,13 @@ class MockGame(Game):
             return False
 
         return True
+
+    def detect_if_first_player_move(self, position):
+        c_count = position.count('c')
+        if c_count % 2 == 0:
+            return True
+        else:
+            return False
 
 
 class TicTacToeGame(Game):
@@ -90,7 +100,6 @@ class TicTacToeGame(Game):
 
     def simulate_to_the_end(self, position, is_first_player_move):
         sim_position = position[:]
-        #self.print_board(sim_position)
 
         outcome = self.find_outcome(sim_position)
         while outcome is None:
@@ -200,3 +209,13 @@ class TicTacToeGame(Game):
             move_input[move["index"]] = -1
 
         return move_input
+
+    def detect_if_first_player_move(self, position):
+        first_player_marks_count = position.count(self.first_player_marker)
+        second_player_marks_count = position.count(self.second_player_marker)
+
+        # We assume correct position here, so first player can have as many marks as second, one just one more
+        if first_player_marks_count > second_player_marks_count:
+            return False
+        else:
+            return True

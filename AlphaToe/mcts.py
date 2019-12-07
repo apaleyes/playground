@@ -29,9 +29,10 @@ class MonteCarloTreeSearch(TreeSearch):
     def __init__(self, game):
         super().__init__(game)
 
-
     def create_node(self, position):
-        return MonteCarloTreeNode(position)
+        node = MonteCarloTreeNode(position)
+        node.is_first_player_move = self.game.detect_if_first_player_move(position)
+        return node
 
     def select_next_position(self, node):
         max_visits_child = max(node.children, key=lambda c: c.n_visits)
