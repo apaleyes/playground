@@ -3,6 +3,8 @@ import numpy as np
 
 import math
 
+from mcts import MonteCarloTreeSearch
+from game import TicTacToeGame
 
 from common import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TreeNode, TreeSearch
 
@@ -10,8 +12,7 @@ UCB_C = 1.0
 
 BOARD_SIZE = 3
 
-def build_model(x, board_size):
-    n_input = 2 * board_size * board_size
+def build_model(x, n_input):
     n_hidden1 = 50
 
     weights = {
@@ -64,9 +65,10 @@ def test_nn():
     test_board_size = 3
     test_position = ['.'] * (test_board_size ** 2)
     test_input = position_to_input(test_position) + move_to_input('x', 0, test_board_size)
+    test_n_input = 2 * test_board_size * test_board_size
 
-    x = tf.placeholder("float", [None, 2 * test_board_size * test_board_size])
-    model = build_model(x, test_board_size)
+    x = tf.placeholder("float", [None, test_n_input])
+    model = build_model(x, test_n_input)
 
     with tf.Session() as tf_session:
         tf_session.run(tf.global_variables_initializer())
@@ -74,5 +76,50 @@ def test_nn():
     
     print(test_output)
 
+
+class Model():
+    def __init__(self, input_size):
+        self.n_input = input_size
+        self.x = tf.placeholder("float", [None, self.n_input])
+        self.model = build_model(self.x, self.n_input)
+
+    def evaluate(self, model_input):
+        with tf.Session() as tf_session:
+            tf_session.run(tf.global_variables_initializer())
+            output = tf_session.run(self.model, feed_dict={self.x: [model_input]})
+            move_value, position_value = output[0]
+
+        return move_value, position_value
+
+
+class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
+    def __init__(self, game, model):
+        super().__init__(game)
+        self.model = model
+
+    def simulate(self, node):
+        # This is pseudocode only at the moment
+        position_model_input = self.game.position_to_model_input(node.position)
+        possible_moves = self.game.get_possible_moves(node.position, node.is_first_player_move)
+        position_values = []
+        for move in possible_moves:
+            model_input = position_model_input + self.game.move_to_model_input(move)
+            move_value, position_value = self.model.evaluate(model_input)
+            position_values.append(position_value)
+        return max(position_values)
+        # end of pseudocode
+
+    def backpropagate(self, node, value):
+        node.n_visits += 1
+        node.value += value
+
+        if node.parent is not None:
+            self.backpropagate(node.parent, value)
+
 if __name__ == '__main__':
-    test_nn()
+    board_size = 3
+    game = TicTacToeGame(board_size)
+    model = Model(2 * board_size * board_size)
+    mcts = ModelBaseMonteCarloTreeSearch(game, model)
+
+    mcts.loop(3, False)

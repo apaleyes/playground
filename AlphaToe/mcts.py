@@ -70,7 +70,6 @@ class MonteCarloTreeSearch(TreeSearch):
         outcome = self.game.simulate_to_the_end(node.position, node.is_first_player_move)
         return outcome
 
-
     def backpropagate(self, node, outcome):
         node.n_visits += 1
         if node.is_first_player_move and outcome == FIRST_PLAYER_WIN:
@@ -83,23 +82,6 @@ class MonteCarloTreeSearch(TreeSearch):
         if node.parent is not None:
             self.backpropagate(node.parent, outcome)
 
-
-class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
-    def __init__(self, game, model):
-        super().__init__(game)
-        self.model = model
-
-    def simulate(self, node):
-        # This is pseudocode only at the moment
-        model_input = self.game.position_to_model_input(node.position)
-        possible_moves = self.game.get_possible_moves(node.position, node.is_first_player_move)
-        position_values = []
-        for move in possible_moves:
-            model_input = model_input + self.game.move_to_model_input(move)
-            position_value, move_value = self.model.evaluate(model_input)
-            position_values.append(position_value)
-        return max(position_values)
-        # end of pseudocode
 
 if __name__ == "__main__":
     game = TicTacToeGame()
