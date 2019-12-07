@@ -1,9 +1,5 @@
 import math
 
-FIRST_PLAYER_WIN = 1
-SECOND_PLAYER_WIN = -1
-DRAW = 0
-
 
 class TreeNode:
     def __init__(self, position):
@@ -20,8 +16,10 @@ class TreeSearch:
         self.game = game
 
 
-    def loop(self, n_iterations, debug=False):
-        root = self.create_node(self.game.get_initial_position())
+    def loop(self, n_iterations, initial_position=None, debug=False):
+        if initial_position is None:
+            initial_position = self.game.get_initial_position()
+        root = self.create_node(initial_position)
 
         for i in range(n_iterations):
             print("Starting iteration " + str(i))
@@ -37,6 +35,13 @@ class TreeSearch:
 
         if debug:
             self.print_tree(root)
+
+        next_position = self.select_next_position(root)
+        return next_position
+
+
+    def select_next_position(self, node):
+        raise NotImplementedError
 
 
     def create_node(self, position):

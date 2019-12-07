@@ -4,9 +4,8 @@ import numpy as np
 import math
 
 from mcts import MonteCarloTreeSearch
-from game import TicTacToeGame
+from game import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TicTacToeGame
 
-from common import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TreeNode, TreeSearch
 
 UCB_C = 1.0
 
@@ -122,4 +121,5 @@ if __name__ == '__main__':
     model = Model(2 * board_size * board_size)
     mcts = ModelBaseMonteCarloTreeSearch(game, model)
 
-    mcts.loop(3, False)
+    next_position = mcts.loop(3)
+    print(next_position)

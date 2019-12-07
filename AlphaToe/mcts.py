@@ -4,8 +4,8 @@
 import math
 import random
 
-from common import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TreeNode, TreeSearch
-from game import TicTacToeGame
+from tree_search import TreeNode, TreeSearch
+from game import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TicTacToeGame
 
 
 UCB_C = 1.0
@@ -32,6 +32,10 @@ class MonteCarloTreeSearch(TreeSearch):
 
     def create_node(self, position):
         return MonteCarloTreeNode(position)
+
+    def select_next_position(self, node):
+        max_visits_child = max(node.children, key=lambda c: c.n_visits)
+        return max_visits_child.position
 
     def select(self, node):
         if len(node.children) == 0:
@@ -86,7 +90,8 @@ class MonteCarloTreeSearch(TreeSearch):
 if __name__ == "__main__":
     game = TicTacToeGame()
     mcts = MonteCarloTreeSearch(game)
-    mcts.loop(5, True)
+    next_position = mcts.loop(100, debug=False)
+    print(next_position)
 
     # tttg = TicTacToeGame(board_size=4)
     # print(tttg.simulate_to_the_end(tttg.get_initial_position(), True))

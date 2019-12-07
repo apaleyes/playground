@@ -1,6 +1,9 @@
 import random
 
-from common import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN
+
+FIRST_PLAYER_WIN = 1
+SECOND_PLAYER_WIN = -1
+DRAW = 0
 
 
 class Game:
