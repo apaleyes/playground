@@ -11,7 +11,7 @@ UCB_C = 1.0
 
 BOARD_SIZE = 3
 
-def build_model(x, n_input):
+def build_model_position_and_move(x, n_input):
     n_hidden1 = 50
 
     weights = {
@@ -35,6 +35,28 @@ def build_model(x, n_input):
     output_2 = tf.add(tf.matmul(layer_1, weights['out2']), biases['out2'], name='output_layer_2')
     output_2 = tf.math.tanh(output_2)
     output_layer = tf.concat([output_1, output_2], 1)
+
+    return output_layer
+
+def build_model_position(x, n_input):
+    n_hidden1 = 50
+
+    weights = {
+        'h1': tf.Variable(tf.random.normal([n_input, n_hidden1]), name='w_h_1'),
+        'out': tf.Variable(tf.random.normal([n_hidden1, 1]), name='w_out')
+    }
+
+    biases = {
+        'b1': tf.Variable(tf.random.normal([n_hidden1]), name='b_h_1'),
+        'out': tf.Variable(tf.random.normal([1]), name='b_out')
+    }
+
+    layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'], name='hidden_layer_1')
+    layer_1 = tf.nn.relu(layer_1)
+    layer_1 = tf.nn.dropout(layer_1, rate=0.1)
+
+    output_layer = tf.add(tf.matmul(layer_1, weights['out']), biases['out'], name='output_layer')
+    output_layer = tf.sigmoid(output_layer)
 
     return output_layer
 
@@ -77,18 +99,17 @@ def test_nn():
 
 
 class Model():
-    def __init__(self, input_size):
+    def __init__(self, input_size, tf_session):
         self.n_input = input_size
         self.x = tf.placeholder("float", [None, self.n_input])
-        self.model = build_model(self.x, self.n_input)
+        self.tf_session = tf_session
+        self.model = build_model_position(self.x, self.n_input)
 
     def evaluate(self, model_input):
-        with tf.Session() as tf_session:
-            tf_session.run(tf.global_variables_initializer())
-            output = tf_session.run(self.model, feed_dict={self.x: [model_input]})
-            move_value, position_value = output[0]
+        output = self.tf_session.run(self.model, feed_dict={self.x: [model_input]})
+        position_value = output[0][0]
 
-        return move_value, position_value
+        return position_value
 
 
 class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
@@ -101,16 +122,14 @@ class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
         if outcome is not None:
             return outcome
 
-        # This is pseudocode only at the moment
         position_model_input = self.game.position_to_model_input(node.position)
         possible_moves = self.game.get_possible_moves(node.position, node.is_first_player_move)
         position_values = []
         for move in possible_moves:
             model_input = position_model_input + self.game.move_to_model_input(move)
-            move_value, position_value = self.model.evaluate(model_input)
+            position_value = self.model.evaluate(model_input)
             position_values.append(position_value)
         return max(position_values)
-        # end of pseudocode
 
     def backpropagate(self, node, value):
         node.n_visits += 1
@@ -120,16 +139,18 @@ class ModelBaseMonteCarloTreeSearch(MonteCarloTreeSearch):
             self.backpropagate(node.parent, value)
 
 if __name__ == '__main__':
-    board_size = 3
-    game = TicTacToeGame(board_size)
-    model = Model(2 * board_size * board_size)
-    mcts = ModelBaseMonteCarloTreeSearch(game, model)
+    with tf.Session() as tf_session:
+        board_size = 3
+        game = TicTacToeGame(board_size)
+        model = Model(2 * board_size * board_size, tf_session)
+        mcts = ModelBaseMonteCarloTreeSearch(game, model)
 
-    position = None
-    for _ in range(10):
-        position = mcts.loop(3, initial_position=position)
-        print(position)
-        outcome = game.find_outcome(position)
-        if outcome is not None:
-            print("Finished. Outcome ", outcome)
-            break
+        tf_session.run(tf.global_variables_initializer())
+        position = None
+        for _ in range(10):
+            position = mcts.loop(3, initial_position=position)
+            print(position)
+            outcome = game.find_outcome(position)
+            if outcome is not None:
+                print("Finished. Outcome ", outcome)
+                break
