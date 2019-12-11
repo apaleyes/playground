@@ -22,11 +22,13 @@ class TreeSearch:
         root = self.create_node(initial_position)
 
         for i in range(n_iterations):
-            print("Starting iteration " + str(i))
+            if debug:
+                print("Starting iteration " + str(i))
 
             leaf_node = self.select(root)
             if leaf_node is None:
-                print("All possible positions were evaluated")
+                if debug:
+                    print("All possible positions were evaluated")
                 break
 
             new_child = self.expand(leaf_node)

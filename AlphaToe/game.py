@@ -31,6 +31,9 @@ class Game:
     def detect_if_first_player_move(self, position):
         raise NotImplementedError
 
+    def get_move(self, old_position, new_position):
+        raise NotImplementedError
+
 class MockGame(Game):
     def __init__(self, n_children=3):
         self.n_children = n_children
@@ -219,3 +222,11 @@ class TicTacToeGame(Game):
             return False
         else:
             return True
+
+    def get_move(self, old_position, new_position):
+        for i, (old, new) in enumerate(zip(old_position, new_position)):
+            if old != new:
+                return {"marker": new, "index": i}
+
+        return None
+

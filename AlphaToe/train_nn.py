@@ -56,7 +56,7 @@ def build_model_position(x, n_input):
     layer_1 = tf.nn.dropout(layer_1, rate=0.1)
 
     output_layer = tf.add(tf.matmul(layer_1, weights['out']), biases['out'], name='output_layer')
-    output_layer = tf.sigmoid(output_layer)
+    output_layer = tf.math.tanh(output_layer)
 
     return output_layer
 
@@ -145,12 +145,40 @@ if __name__ == '__main__':
         model = Model(2 * board_size * board_size, tf_session)
         mcts = ModelBaseMonteCarloTreeSearch(game, model)
 
+
+        y = tf.placeholder('float')
+        loss = tf.reduce_mean(tf.square(model.model - y))
+        optimizer = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
+
         tf_session.run(tf.global_variables_initializer())
-        position = None
-        for _ in range(10):
+
+        n_training_games = 1000
+        for game_i in range(n_training_games):
+            training_data = []
+            outcome = None
+            position = game.get_initial_position()
+            while outcome is None:
+                new_position = mcts.loop(3, initial_position=position)
+                move = game.get_move(position, new_position)
+
+                model_input = game.position_to_model_input(position) + game.move_to_model_input(move)
+                training_data.append(model_input)
+
+                position = new_position
+                outcome = game.find_outcome(position)
+
+            _, current_loss = tf_session.run([optimizer, loss], feed_dict={model.x: training_data, y: [outcome]*len(training_data)})
+
+            if game_i % 200 == 0:
+                print("Played {} games, current loss is {}".format(game_i, current_loss))
+
+        print()
+        print("Now let's play a test game")
+        outcome = None
+        position = game.get_initial_position()
+        while outcome is None:
             position = mcts.loop(3, initial_position=position)
-            print(position)
+            print()
+            print(position[0:3], '\n', position[3:6], '\n', position[6:9])
             outcome = game.find_outcome(position)
-            if outcome is not None:
-                print("Finished. Outcome ", outcome)
-                break
+
