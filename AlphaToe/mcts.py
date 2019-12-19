@@ -8,7 +8,8 @@ from tree_search import TreeNode, TreeSearch
 from game import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TicTacToeGame
 
 
-UCB_C = 1.0
+UCB_C = math.sqrt(2)
+INT_MAX = 2**63 - 1
 
 class MonteCarloTreeNode(TreeNode):
     def __init__(self, position):
@@ -20,7 +21,7 @@ class MonteCarloTreeNode(TreeNode):
         N = self.parent.n_visits
 
         if n == 0:
-            n = 1
+            return INT_MAX
 
         return v / n + UCB_C * math.sqrt(math.log(N) / n)
 
@@ -35,27 +36,20 @@ class MonteCarloTreeSearch(TreeSearch):
         return node
 
     def select_next_position(self, node):
-        max_visits_child = max(node.children, key=lambda c: c.n_visits)
-        return max_visits_child.position
+        best_child = max(node.children, key=lambda c: c.n_visits)
+        return best_child.position
 
     def select(self, node):
         if len(node.children) == 0:
             # found a leaf, return it
             return node
 
-        non_terminal_children = [child for child in node.children if not self.game.is_terminal(child.position)]
-        # sort in decsending order
-        non_terminal_children.sort(key=lambda c: c.ucb(), reverse=True)
+        max_ucb = max([c.ucb() for c in node.children])
+        max_ucb_children = [child for child in node.children if child.ucb() == max_ucb]
+        child = random.choice(max_ucb_children)
+        leaf = self.select(child)
 
-        # iterate over sorted children, finish when
-        # we found a non-terminal leaf
-        for child in non_terminal_children:
-            leaf = self.select(child)
-            if leaf is not None:
-                return leaf
-
-        # we haven't found a non-terminal leaf in this subtree
-        return None
+        return leaf
 
 
     def expand(self, leaf_node):
@@ -77,9 +71,9 @@ class MonteCarloTreeSearch(TreeSearch):
 
     def backpropagate(self, node, outcome):
         node.n_visits += 1
-        if node.is_first_player_move and outcome == FIRST_PLAYER_WIN:
+        if not node.is_first_player_move and outcome == FIRST_PLAYER_WIN:
             node.value += 1
-        if not node.is_first_player_move and outcome == SECOND_PLAYER_WIN:
+        if node.is_first_player_move and outcome == SECOND_PLAYER_WIN:
             node.value += 1
         if outcome == DRAW:
             node.value += 0.5
@@ -91,7 +85,8 @@ class MonteCarloTreeSearch(TreeSearch):
 if __name__ == "__main__":
     game = TicTacToeGame()
     mcts = MonteCarloTreeSearch(game)
-    next_position = mcts.loop(100, debug=False)
+    initial_position = game.get_initial_position()
+    next_position = mcts.loop(10, initial_position, debug=True)
     print(next_position)
 
     # tttg = TicTacToeGame(board_size=4)

@@ -26,14 +26,12 @@ class TreeSearch:
                 print("Starting iteration " + str(i))
 
             leaf_node = self.select(root)
-            if leaf_node is None:
-                if debug:
-                    print("All possible positions were evaluated")
-                break
+            outcome = self.game.find_outcome(leaf_node.position)
+            if outcome is None:
+                leaf_node = self.expand(leaf_node)
+                outcome = self.simulate(leaf_node)
 
-            new_child = self.expand(leaf_node)
-            outcome = self.simulate(new_child)
-            self.backpropagate(new_child, outcome)
+            self.backpropagate(leaf_node, outcome)
 
         if debug:
             self.print_tree(root)
@@ -67,6 +65,6 @@ class TreeSearch:
 
 
     def print_tree(self, node, level=0):
-        print('{}{}'.format('\t' * level, node.position))
+        print('{}{}'.format('\t' * level, node.position), node.value, node.n_visits, node.is_first_player_move)
         for child in node.children:
             self.print_tree(child, level + 1)
