@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 import math
+import random
 
 from mcts import MonteCarloTreeSearch
 from game import FIRST_PLAYER_WIN, DRAW, SECOND_PLAYER_WIN, TicTacToeGame
@@ -58,58 +59,21 @@ def build_model_position(x, n_input):
     }
 
     layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'], name='hidden_layer_1')
-    layer_1 = tf.nn.tanh(layer_1)
+    layer_1 = tf.nn.relu(layer_1)
     layer_1 = tf.nn.dropout(layer_1, rate=0.1)
 
     layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'], name='hidden_layer_2')
-    layer_2 = tf.nn.tanh(layer_2)
+    layer_2 = tf.nn.relu(layer_2)
     layer_2 = tf.nn.dropout(layer_2, rate=0.1)
 
     layer_3 = tf.add(tf.matmul(layer_2, weights['h3']), biases['b3'], name='hidden_layer_3')
-    layer_3 = tf.nn.tanh(layer_3)
+    layer_3 = tf.nn.relu(layer_3)
     layer_3 = tf.nn.dropout(layer_3, rate=0.1)
 
     output_layer = tf.add(tf.matmul(layer_3, weights['out']), biases['out'], name='output_layer')
-    output_layer = tf.math.tanh(output_layer)
+    output_layer = tf.nn.sigmoid(output_layer)
 
     return output_layer
-
-
-def position_to_input(position):
-    marker_to_value = {
-        'x': 1,
-        '.': 0,
-        'o': -1
-    }
-
-    input_vector = [marker_to_value[marker] for marker in position]
-
-    return input_vector
-
-def move_to_input(marker, next_move_index, board_size):
-    move_input = [0] * (board_size ** 2)
-    if marker == 'x':
-        move_input[next_move_index] = 1
-    else:
-        move_input[next_move_index] = -1
-
-    return move_input
-
-
-def test_nn():
-    test_board_size = 3
-    test_position = ['.'] * (test_board_size ** 2)
-    test_input = position_to_input(test_position) + move_to_input('x', 0, test_board_size)
-    test_n_input = 2 * test_board_size * test_board_size
-
-    x = tf.placeholder("float", [None, test_n_input])
-    model = build_model(x, test_n_input)
-
-    with tf.Session() as tf_session:
-        tf_session.run(tf.global_variables_initializer())
-        test_output = tf_session.run(model, feed_dict={x: [test_input]})
-    
-    print(test_output)
 
 
 class Model():
@@ -161,7 +125,7 @@ if __name__ == '__main__':
 
 
         y = tf.placeholder('float')
-        loss = tf.reduce_mean(tf.square(model.model - y))
+        loss = tf.losses.mean_squared_error(model.model, y)
         optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
 
         tf_session.run(tf.global_variables_initializer())
@@ -170,7 +134,7 @@ if __name__ == '__main__':
         n_rounds = 5
         batch_size = 100
         n_epochs = 10
-        n_iterations = 100
+        n_iterations = 15
         n_training_games = games_per_round * n_rounds
 
         # for round_i in range(n_rounds):
@@ -244,12 +208,27 @@ if __name__ == '__main__':
             return score
 
         print()
-        print("Now let's play a test game")
+        print("Now let's play a test game with mcts")
         outcome = None
         position = game.get_initial_position()
         while outcome is None:
             position = mcts.loop(n_iterations, initial_position=position)
             print()
-            print(position[0:3], '\n', position[3:6], '\n', position[6:9])
+            print('', position[0:3], '\n', position[3:6], '\n', position[6:9])
+            outcome = game.find_outcome(position)
+
+
+        print()
+        print("Now let's play a test game without mcts")
+        outcome = None
+        position = game.get_initial_position()
+        while outcome is None:
+            is_first_player_move = game.detect_if_first_player_move(position)
+            moves = game.get_possible_moves(position, is_first_player_move)
+            random.shuffle(moves)
+            best_move = max(moves, key=lambda m: get_score(position, m))
+            position[best_move["index"]] = best_move["marker"]
+            print()
+            print('', position[0:3], '\n', position[3:6], '\n', position[6:9])
             outcome = game.find_outcome(position)
 
